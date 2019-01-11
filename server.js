@@ -1,17 +1,22 @@
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+const app = require('express')();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+const routers = require('./router')
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+app.set('socketio', io);
 
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+mongoose.connect('mongodb://localhost:27017/mobile-api');
+mongoose.Promise = global.Promise;
+
+app.use(bodyParser.json());
+app.use(routers);
+app.use((err, req, res, next) => {
+  res.status(500).send({ err: err.message });
 });
 
-
 io.on('connection', function (socket) {
-  socket.on('newMessage', function (msg) {
-    io.emit('newMessage', msg);
-    console.log(msg);
-  });
+  console.log('A client just joined on', socket.id);
 
   socket.on('disconnect', function (msg) {
     console.log('user disconnect');
@@ -19,5 +24,5 @@ io.on('connection', function (socket) {
 });
 
 http.listen(process.env.PORT || 5000, function () {
-  console.log('listening on 3000');
-})
+  console.log('listening on 5000');
+});
